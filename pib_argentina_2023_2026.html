@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIB Argentina — Variación trimestral s.e. 2023–2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #ffffff;
+    --surface: #f8f8f6;
+    --sur2:    #f1efe8;
+    --border:  rgba(0,0,0,0.07);
+    --text-1:  #2c2c2a;
+    --text-2:  #5f5e5a;
+    --text-3:  #888780;
+    --c-pos:   #378ADD;
+    --c-neg:   #A32D2D;
+    --c-rem:   #97C459;
+    --c-hito:  #7F77DD;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #131312;
+      --surface: #1a1a18;
+      --sur2:    #222220;
+      --border:  rgba(255,255,255,0.07);
+      --text-1:  #e0dfdb;
+      --text-2:  #a0a09a;
+      --text-3:  #55585f;
+    }
+  }
+  body {
+    background: var(--bg); color: var(--text-1);
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 1.5rem 1.5rem 3rem; max-width: 900px; margin: 0 auto;
+  }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; }
+  .tab {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid transparent;
+    background: var(--sur2); color: var(--text-3); transition: all 0.15s; user-select: none;
+  }
+  .tab.active { background: rgba(55,138,221,0.12); color: var(--c-pos); border-color: var(--c-pos); }
+  .chart-box {
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 10px; padding: 1.1rem 1.1rem 1rem; position: relative;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; font-size: 11.5px; color: var(--text-3); }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-sq   { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+  .leg-hito { width: 2px; height: 13px; border-radius: 1px; background: var(--c-hito); display: inline-block; }
+  .axis-lbl { font-size: 10.5px; color: var(--text-3); margin-bottom: 6px; }
+  .chart-wrap { position: relative; width: 100%; height: 380px; }
+  .ctt {
+    position: absolute; pointer-events: none;
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-size: 11.5px;
+    max-width: 270px; z-index: 20; display: none; line-height: 1.65;
+  }
+  .ctt-title { font-weight: 500; color: var(--text-1); margin-bottom: 4px; font-size: 12px; }
+  .ctt-val   { font-size: 11.5px; }
+  .ctt-src   { font-size: 10px; color: var(--text-3); margin-top: 2px; }
+  .ctt-hito  { margin-top: 7px; padding-top: 7px; border-top: 0.5px solid var(--border); color: var(--c-hito); font-size: 11px; font-weight: 500; }
+  .ctt-hdesc { color: var(--text-3); font-size: 10.5px; margin-top: 2px; }
+  .source { text-align: right; font-size: 10.5px; font-style: italic; color: var(--text-3); margin-top: 0.6rem; }
+  @media (max-width: 520px) { body { padding: 1rem; } .chart-wrap { height: 270px; } }
+</style>
+</head>
+<body>
+
+<p style="font-size:1.05rem; font-weight:500; color:var(--text-1); margin-bottom:1rem;">PIB Argentina — Variación trimestral desestacionalizada (s.e.) · Q2 2023 – Q3 2026</p>
+
+<div class="tabs">
+  <div class="tab active" id="tab-bar"  onclick="setMode('bar')">Barras</div>
+  <div class="tab"        id="tab-line" onclick="setMode('line')">Línea</div>
+</div>
+
+<div class="chart-box">
+  <div class="legend">
+    <span class="leg-item"><span class="leg-sq" style="background:var(--c-pos);"></span><span>Crecimiento — INDEC</span></span>
+    <span class="leg-item"><span class="leg-sq" style="background:var(--c-neg);"></span><span>Caída — INDEC</span></span>
+    <span class="leg-item"><span class="leg-sq" style="background:var(--c-rem); opacity:.85;"></span><span>Proyección — REM abr-2026</span></span>
+    <span class="leg-item"><span class="leg-hito"></span><span>Hito — pasar el cursor</span></span>
+  </div>
+  <div class="axis-lbl">PIB — variación % trimestral desestacionalizada (s.e.)</div>
+  <div class="chart-wrap">
+    <canvas id="mainChart" role="img"
+      aria-label="PIB Argentina variación trimestral desestacionalizada. INDEC Q2-2023 a Q4-2025, proyección REM Q1 a Q3 2026.">
+    </canvas>
+    <div class="ctt" id="tooltip">
+      <div class="ctt-title" id="tt-title"></div>
+      <div class="ctt-val"   id="tt-val"></div>
+      <div class="ctt-src"   id="tt-src"></div>
+      <div class="ctt-hito"  id="tt-hl" style="display:none;"></div>
+      <div class="ctt-hdesc" id="tt-hd" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<p class="source">
+  INDEC — Serie desestacionalizada PIB, datos revisados · REM–BCRA, abril 2026 (Cuadro 4.1, publicado 7 may 2026)
+</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridC  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const tickC  = isDark ? '#55585f' : '#888780';
+
+const labels = [
+  'Q2-23','Q3-23','Q4-23',
+  'Q1-24','Q2-24','Q3-24','Q4-24',
+  'Q1-25','Q2-25','Q3-25','Q4-25',
+  'Q1-26','Q2-26','Q3-26'
+];
+
+/*
+  ── SERIE INDEC — variación % trimestral desestacionalizada (s.e.)
+  Fuente: INDEC, Informe de avance del nivel de actividad, Q4-2025 (marzo 2026)
+  Tabla del resumen ejecutivo — datos revisados al momento de publicación más reciente.
+  Los datos de 2023 fueron verificados en los informes originales (textos literales).
+  Los de 2024 y 2025 corresponden a la tabla del informe Q4-2025 que incluye revisiones.
+
+  Q2-23: −2,8  (informe sep-23, texto: "descendió 2,8%")
+  Q3-23: +2,7  (informe dic-23, texto: "ascendió 2,7%")
+  Q4-23: −1,9  (informe mar-24, texto: "descendió 1,9%")
+  Q1-24: −1,8  (tabla Q4-25, revisado; original jun-24 era −2,6%)
+  Q2-24: −0,8  (tabla Q4-25, revisado; original sep-24 era −1,7%)
+  Q3-24: +3,9  (tabla Q4-25, coincide con informe dic-24)
+  Q4-24: +1,6  (tabla Q4-25, revisado; original mar-25 era +1,4%)
+  Q1-25: +1,0  (tabla Q4-25, revisado; original jun-25 era +0,8%)
+  Q2-25: −0,1  (tabla Q4-25, coincide con informe sep-25)
+  Q3-25: +0,6  (tabla Q4-25, revisado; original dic-25 era +0,3%)
+  Q4-25: +0,6  (informe mar-26, texto: "aumentó 0,6%")
+*/
+const seReal = [
+  -2.4,  // Q2-23
+   2.1,  // Q3-23
+  -2.4,  // Q4-23
+  -1.6,  // Q1-24
+  -0.8,  // Q2-24
+   3.9,  // Q3-24
+   1.6,  // Q4-24
+   1.0,  // Q1-25
+  -0.1,  // Q2-25
+   0.6,  // Q3-25
+   0.6,  // Q4-25
+  null, null, null
+];
+
+/*
+  ── SERIE REM — variación % trimestral desestacionalizada (s.e.)
+  Fuente: REM–BCRA, abril 2026, Cuadro 4.1 "Expectativas de PIB a precios constantes"
+  Publicado: 7 de mayo de 2026
+  Q1-26: +0,3%  (mediana total)
+  Q2-26: +1,0%  (mediana total)
+  Q3-26: +0,9%  (mediana total)
+  Q4-26: no publicado en el REM
+  Crecimiento anual 2026 (promedio vs. promedio 2025): +2,8%
+*/
+const seREM = [
+  null, null, null,
+  null, null, null, null,
+  null, null, null, null,
+   0.3,   // Q1-26
+   1.0,   // Q2-26
+   0.9    // Q3-26
+];
+
+const hitos = [
+  {
+    idx: 0,
+    emoji: '🌵',
+    label: 'Sequía — Q2 2023',
+    desc: '−2,8% s.e. La peor sequía en décadas colapsa el agro. Primer trimestre en caída tras el rebote post-pandemia.'
+  },
+  {
+    idx: 3,
+    emoji: '💥',
+    label: 'Shock de ajuste — Q1 2024',
+    desc: '−1,8% s.e. (revisado). Devaluación +100% en dic-23. Caída del consumo, la inversión y la construcción. Inicio del ajuste fiscal.'
+  },
+  {
+    idx: 5,
+    emoji: '📈',
+    label: 'Rebote — Q3 2024',
+    desc: '+3,9% s.e.: mayor salto trimestral de la serie. Consumo privado +4,6% s.e., recuperación generalizada tras el piso del ajuste.'
+  },
+  {
+    idx: 7,
+    emoji: '🔄',
+    label: 'Moderación — Q1 2025',
+    desc: '+1,0% s.e. (revisado). Crecimiento más moderado. La economía sale de la recesión pero pierde impulso trimestral.'
+  },
+  {
+    idx: 10,
+    emoji: '⚠️',
+    label: 'Freno — Q4 2025',
+    desc: '+0,6% s.e. Cierre de año con ritmo moderado. Consumo público −1,0% s.e. El año 2025 acumula +4,4% anual.'
+  },
+  {
+    idx: 11,
+    emoji: '📊',
+    label: 'Proyección REM — Q1 2026',
+    desc: '+0,3% s.e. — mediana REM abril 2026. Dato INDEC pendiente: 23 jun 2026. Crecimiento anual 2026 proyectado: +2,8%.'
+  }
+];
+const hitoMap = {};
+hitos.forEach(h => { hitoMap[h.idx] = h; });
+
+const hitoPlugin = {
+  id: 'hitoLines',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    hitos.forEach(h => {
+      const x = scales.x.getPixelForValue(h.idx);
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = '#7F77DD'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]); ctx.globalAlpha = 0.5;
+      ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.font = '10px system-ui'; ctx.fillStyle = '#7F77DD'; ctx.textAlign = 'center';
+      ctx.fillText('▲', x, chartArea.bottom + 13);
+      ctx.restore();
+    });
+  }
+};
+
+const sepPlugin = {
+  id: 'sepLine',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const x = scales.x.getPixelForValue(11);
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom);
+    ctx.strokeStyle = isDark ? 'rgba(151,196,89,0.45)' : 'rgba(59,109,17,0.35)';
+    ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '9px system-ui'; ctx.fillStyle = isDark ? '#97c459' : '#3B6D11';
+    ctx.textAlign = 'left';
+    ctx.fillText('▶ Proyección REM', x + 4, chartArea.top + 12);
+    ctx.restore();
+  }
+};
+
+let mode = 'bar';
+
+function barColor(v, isREM) {
+  if (v === null) return 'transparent';
+  if (isREM) return isDark ? 'rgba(151,196,89,0.82)' : 'rgba(99,153,34,0.75)';
+  return v >= 0
+    ? (isDark ? 'rgba(55,138,221,0.85)' : 'rgba(55,138,221,0.78)')
+    : (isDark ? 'rgba(163,45,45,0.88)' : 'rgba(163,45,45,0.75)');
+}
+
+function buildDatasets(m) {
+  if (m === 'bar') {
+    return [
+      { label:'INDEC', data:seReal, type:'bar',
+        backgroundColor: seReal.map(v => barColor(v, false)),
+        borderRadius:3, borderSkipped:false },
+      { label:'REM', data:seREM, type:'bar',
+        backgroundColor: isDark ? 'rgba(151,196,89,0.82)' : 'rgba(99,153,34,0.75)',
+        borderRadius:3, borderSkipped:false }
+    ];
+  }
+  const combined = seReal.map((v,i) => v !== null ? v : seREM[i]);
+  const isREM    = seREM.map(v => v !== null);
+  return [{
+    label:'PIB s.e.',
+    data: combined,
+    type:'line',
+    segment: {
+      borderColor: ctx => isREM[ctx.p1DataIndex] ? '#97C459'
+        : (combined[ctx.p1DataIndex] >= 0 ? '#378ADD' : '#A32D2D'),
+      borderDash: ctx => isREM[ctx.p1DataIndex] ? [6,4] : []
+    },
+    backgroundColor: 'transparent',
+    borderWidth: 2.5,
+    pointRadius: 5,
+    pointBackgroundColor: combined.map((v,i) =>
+      isREM[i] ? '#97C459' : (v >= 0 ? '#378ADD' : '#A32D2D')
+    ),
+    pointBorderColor: isDark ? '#131312' : '#fff',
+    pointBorderWidth: 2,
+    pointHoverRadius: 8,
+    tension: 0.2,
+    spanGaps: true
+  }];
+}
+
+const myChart = new Chart(document.getElementById('mainChart'), {
+  type:'bar',
+  plugins:[hitoPlugin, sepPlugin],
+  data:{ labels, datasets:buildDatasets('bar') },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'index', intersect:false },
+    plugins:{ legend:{ display:false }, tooltip:{ enabled:false } },
+    scales:{
+      x:{ grid:{ color:gridC }, ticks:{ color:tickC, font:{ size:11.5 }, maxRotation:0 } },
+      y:{
+        grid:{ color:gridC },
+        ticks:{ color:tickC, font:{ size:10.5 },
+          callback: v => (v>0?'+':'')+v.toFixed(1)+'%' },
+        min:-4, max:5
+      }
+    }
+  }
+});
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-bar').className  = 'tab'+(m==='bar'  ? ' active':'');
+  document.getElementById('tab-line').className = 'tab'+(m==='line' ? ' active':'');
+  myChart.data.datasets = buildDatasets(m);
+  myChart.update('none');
+}
+
+const tooltipEl = document.getElementById('tooltip');
+const ttTitle   = document.getElementById('tt-title');
+const ttVal     = document.getElementById('tt-val');
+const ttSrc     = document.getElementById('tt-src');
+const ttHl      = document.getElementById('tt-hl');
+const ttHd      = document.getElementById('tt-hd');
+const wrap      = document.querySelector('.chart-wrap');
+
+document.getElementById('mainChart').addEventListener('mousemove', e => {
+  const pts = myChart.getElementsAtEventForMode(e,'index',{intersect:false},true);
+  if (!pts.length) { tooltipEl.style.display='none'; return; }
+  const idx  = pts[0].index;
+  const real = seReal[idx];
+  const rem  = seREM[idx];
+  const h    = hitoMap[idx];
+
+  ttTitle.textContent = labels[idx];
+  if (real !== null) {
+    const s = real>=0?'+':'';
+    ttVal.textContent  = 'Var. trim. s.e.: '+s+real.toFixed(1)+'%';
+    ttVal.style.color  = real>=0 ? 'var(--c-pos)' : 'var(--c-neg)';
+    ttSrc.textContent  = 'INDEC — Serie desestacionalizada (datos provisorios/revisados)';
+  } else if (rem !== null) {
+    ttVal.textContent  = 'Var. trim. s.e.: +'+(rem).toFixed(1)+'%';
+    ttVal.style.color  = 'var(--c-rem)';
+    ttSrc.textContent  = 'REM–BCRA abr-2026, Cuadro 4.1 (publicado 7 may 2026)';
+  } else {
+    ttVal.textContent='Sin dato'; ttVal.style.color='var(--text-3)'; ttSrc.textContent='';
+  }
+
+  if (h) { ttHl.textContent=h.emoji+' '+h.label; ttHd.textContent=h.desc; ttHl.style.display=''; ttHd.style.display=''; }
+  else   { ttHl.style.display='none'; ttHd.style.display='none'; }
+
+  tooltipEl.style.display='block';
+  const wr=wrap.getBoundingClientRect();
+  let left=e.clientX-wr.left+14, top=e.clientY-wr.top-20;
+  const tw=tooltipEl.offsetWidth;
+  if (left+tw>wrap.offsetWidth-8) left=e.clientX-wr.left-tw-14;
+  tooltipEl.style.left=left+'px'; tooltipEl.style.top=Math.max(0,top)+'px';
+});
+document.getElementById('mainChart').addEventListener('mouseleave',()=>{ tooltipEl.style.display='none'; });
+</script>
+</body>
+</html>
