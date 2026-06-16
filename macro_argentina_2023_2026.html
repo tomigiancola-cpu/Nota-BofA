@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Macro Argentina 2023–2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #ffffff;
+    --surface: #f8f8f6;
+    --sur2:    #f1efe8;
+    --border:  rgba(0,0,0,0.07);
+    --text-1:  #2c2c2a;
+    --text-2:  #5f5e5a;
+    --text-3:  #888780;
+    --c-res:   #378ADD;
+    --c-bcra:  #3B6D11;
+    --c-bal:   #D85A30;
+    --c-hito:  #7F77DD;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #131312;
+      --surface: #1a1a18;
+      --sur2:    #222220;
+      --border:  rgba(255,255,255,0.07);
+      --text-1:  #e0dfdb;
+      --text-2:  #a0a09a;
+      --text-3:  #55585f;
+    }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* header */
+  .header {
+    margin-bottom: 1.4rem;
+    border-left: 3px solid var(--c-res);
+    padding-left: 0.85rem;
+  }
+  .header-title { font-size: 1.05rem; font-weight: 500; color: var(--text-1); margin-bottom: 3px; }
+  .header-sub   { font-size: 12.5px; color: var(--text-3); }
+
+
+
+  /* selector tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .tab {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: var(--sur2);
+    color: var(--text-3);
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .tab:hover { color: var(--text-1); }
+  .tab.active-res  { background: rgba(55,138,221,0.12); color: #378ADD; border-color: #378ADD; }
+  .tab.active-bcra { background: rgba(59,109,17,0.12);  color: #3B6D11; border-color: #3B6D11; }
+  .tab.active-bal  { background: rgba(216,90,48,0.12);  color: #D85A30; border-color: #D85A30; }
+
+  /* chart box */
+  .chart-box {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.1rem 1rem;
+    position: relative;
+  }
+
+  /* axis labels */
+  .axis-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10.5px;
+    color: var(--text-3);
+    margin-bottom: 6px;
+  }
+  .axis-active { font-weight: 500; }
+
+  .chart-wrap { position: relative; width: 100%; height: 360px; }
+
+  /* legend row */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+  .leg-item { display: flex; align-items: center; gap: 5px; cursor: pointer; transition: opacity .15s; }
+  .leg-swatch { width: 20px; height: 3px; border-radius: 2px; display: inline-block; }
+  .leg-hito   { width: 2px; height: 13px; border-radius: 1px; background: var(--c-hito); display: inline-block; }
+
+  /* tooltip */
+  .ctt {
+    position: absolute;
+    pointer-events: none;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 11.5px;
+    max-width: 250px;
+    z-index: 20;
+    display: none;
+    line-height: 1.6;
+  }
+  .ctt-title { font-weight: 500; color: var(--text-1); margin-bottom: 4px; font-size: 12px; }
+  .ctt-row   { color: var(--text-2); font-size: 11px; display: flex; align-items: center; gap: 5px; }
+  .ctt-dot   { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .ctt-hito  { margin-top: 7px; padding-top: 7px; border-top: 0.5px solid var(--border); color: var(--c-hito); font-size: 11px; font-weight: 500; }
+  .ctt-hdesc { color: var(--text-3); font-size: 10.5px; margin-top: 2px; }
+
+  .source { text-align: right; font-size: 10.5px; font-style: italic; color: var(--text-3); margin-top: 0.6rem; }
+
+  @media (max-width: 520px) {
+    body { padding: 1rem; }
+    .chart-wrap { height: 270px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-title">Macro Argentina — Reservas, Compras BCRA & Balanza Comercial · Jun 2023 – Jun 2026</div>
+  <div class="header-sub">Seleccioná una variable para destacarla. Las otras dos se muestran de fondo.</div>
+</header>
+
+
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active-res" id="tab-res"  onclick="setActive('res')">Reservas brutas</div>
+  <div class="tab"            id="tab-bcra" onclick="setActive('bcra')">Compras BCRA</div>
+  <div class="tab"            id="tab-bal"  onclick="setActive('bal')">Balanza comercial</div>
+</div>
+
+<div class="chart-box">
+  <div class="axis-labels">
+    <span id="lbl-left"  class="axis-active">Reservas brutas (mill. USD)</span>
+    <span id="lbl-right" style="color:var(--text-3)"></span>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="mainChart" role="img"
+      aria-label="Gráfico combinado: reservas brutas BCRA, compras netas BCRA y balanza comercial de Argentina desde junio 2023 a junio 2026.">
+    </canvas>
+    <div class="ctt" id="tooltip">
+      <div class="ctt-title" id="tt-title"></div>
+      <div class="ctt-row" id="tt-r1"><span class="ctt-dot" id="dot1"></span><span id="v1"></span></div>
+      <div class="ctt-row" id="tt-r2"><span class="ctt-dot" id="dot2"></span><span id="v2"></span></div>
+      <div class="ctt-row" id="tt-r3"><span class="ctt-dot" id="dot3"></span><span id="v3"></span></div>
+      <div class="ctt-hito"  id="tt-hl" style="display:none;"></div>
+      <div class="ctt-hdesc" id="tt-hd" style="display:none;"></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="leg-item" onclick="setActive('res')">
+      <span class="leg-swatch" style="background:#378ADD;"></span>
+      <span>Reservas brutas</span>
+    </span>
+    <span class="leg-item" onclick="setActive('bcra')">
+      <span class="leg-swatch" style="background:#3B6D11;"></span>
+      <span>Compras BCRA</span>
+    </span>
+    <span class="leg-item" onclick="setActive('bal')">
+      <span class="leg-swatch" style="background:#D85A30;"></span>
+      <span>Balanza comercial</span>
+    </span>
+    <span class="leg-item" style="cursor:default;">
+      <span class="leg-hito"></span>
+      <span>Hito clave — pasar el cursor</span>
+    </span>
+  </div>
+</div>
+
+<p class="source">Elaboración propia en base a datos de Ámbito Financiero y datos abiertos de mercado (BCRA / INDEC / JP Morgan)</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridC  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const tickC  = isDark ? '#55585f' : '#888780';
+
+const labels = [
+  'Jun-23','Jul-23','Ago-23','Sep-23','Oct-23','Nov-23','Dic-23',
+  'Ene-24','Feb-24','Mar-24','Abr-24','May-24','Jun-24',
+  'Jul-24','Ago-24','Sep-24','Oct-24','Nov-24','Dic-24',
+  'Ene-25','Feb-25','Mar-25','Abr-25','May-25','Jun-25',
+  'Jul-25','Ago-25','Sep-25','Oct-25','Nov-25','Dic-25',
+  'Ene-26','Feb-26','Mar-26','Abr-26','May-26','Jun-26'
+];
+
+// ── Series (índice i = posición en labels) ──
+const reservas = [
+  32500, 32800, 33200, 26900, 25800, 23500, 23073,
+  25000, 27200, 28100, 27500, 29000, 30500,
+  27000, 28400, 28900, 29000, 28800, 29640,
+  29000, 28000, 25052, 37000, 36000, 35500,
+  40465, 43014, 41200, 42000, 41892, 41167,
+  44000, 46905, 46200, 44500, 44100, 47600
+];
+const comprasBCRA = [
+  -350, -200, -180, -700, -500, -400, 2897,
+  1158, 1555, 1800, 3440, 1900, 1400,
+  900,  1100, 1200, 1400, 1050,  900,
+   198,  300,-1156,    0, -500, -300,
+   200,  100, -200,  400,  300,  500,
+  1158, 1555, 1800, 3440, 1835,  952
+];
+const balComercial = [
+  -1727,-649, 100,  300, -100,  200, 1018,
+   869, 1700,2059, 1700, 1700, 1100,
+  1800, 1963,1800, 1600, 1800,  921,
+   162,  450, 600,  700,  534,  700,
+   988,  800, 600,  700,  850, 1892,
+  1987, 1200,1100,  900, 1000,  900
+];
+
+const series = { res: reservas, bcra: comprasBCRA, bal: balComercial };
+const colors = { res: '#378ADD', bcra: '#3B6D11', bal: '#D85A30' };
+const labels3 = {
+  res:  'Reservas brutas',
+  bcra: 'Compras BCRA',
+  bal:  'Balanza comercial'
+};
+const units = { res: 'M USD', bcra: 'M USD', bal: 'M USD' };
+
+// ── Hitos ──
+const hitos = [
+  { idx: 6,  emoji:'🗳️', label:'Asunción Milei — Dic 2023',           desc:'Reservas en mínimo: USD 23.073 M. Inicio del ajuste y compras masivas del BCRA.' },
+  { idx: 10, emoji:'📈', label:'Máx. compras BCRA — Abr 2024',         desc:'BCRA compró USD 3.440 M en el mes, récord histórico. Ajuste fiscal y caída de importaciones.' },
+  { idx: 23, emoji:'🤝', label:'Acuerdo FMI — Abr 2025',               desc:'USD 20.000 M a 48 meses. Desembolso inmediato de USD 12.000 M. Reservas saltan a USD 37.000 M.' },
+  { idx: 25, emoji:'⚠️', label:'Repo + BCRA acumula — Jul 2025',       desc:'Repo USD 2.000 M con bancos internacionales. Reservas tocan USD 40.465 M.' },
+  { idx: 31, emoji:'💰', label:'Récord reservas — Feb 2026',            desc:'Reservas brutas alcanzan USD 46.905 M, máximo de la gestión Milei.' },
+  { idx: 36, emoji:'⭐', label:'S&P sube nota — Jun 2026',              desc:'Calificación sube de CCC+ a B-. BCRA acumula +USD 10.000 M en el año. Reservas USD 47.600 M.' }
+];
+const hitoMap = {};
+hitos.forEach(h => { hitoMap[h.idx] = h; });
+
+// ── State ──
+let activeKey = 'res';
+
+// ── Escalas por serie ──
+const scaleConfig = {
+  res:  { min: 20000, max: 52000, fmt: v => (v/1000).toFixed(0) + 'k' },
+  bcra: { min: -1700, max: 3800,  fmt: v => (v >= 0 ? '+' : '') + Math.round(v) },
+  bal:  { min: -2200, max: 2600,  fmt: v => (v >= 0 ? '+' : '') + Math.round(v) }
+};
+
+// ── Compute alpha for background series ──
+function buildDatasets(active) {
+  const keys = ['res','bcra','bal'];
+  return keys.map(k => {
+    const isActive = k === active;
+    const col = colors[k];
+    const data = series[k];
+
+    // For background series we render a thin faded line
+    if (!isActive) {
+      return {
+        label: k,
+        data,
+        type: 'line',
+        borderColor: col + (isDark ? '28' : '22'),
+        backgroundColor: col + '0a',
+        borderWidth: 1,
+        pointRadius: 0,
+        tension: 0.35,
+        fill: true,
+        yAxisID: 'y',
+        order: 2
+      };
+    }
+
+    // Active series — line for reservas, bar for others
+    if (k === 'res') {
+      return {
+        label: k,
+        data,
+        type: 'line',
+        borderColor: col,
+        backgroundColor: col + '18',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: col,
+        pointHoverBorderColor: isDark ? '#131312' : '#fff',
+        pointHoverBorderWidth: 2,
+        tension: 0.35,
+        fill: true,
+        yAxisID: 'y',
+        order: 1
+      };
+    } else {
+      // bar — positive/negative coloring
+      const bgColors = data.map(v =>
+        v >= 0 ? col + 'cc' : (isDark ? '#a32d2dcc' : '#a32d2db0')
+      );
+      return {
+        label: k,
+        data,
+        type: 'bar',
+        backgroundColor: bgColors,
+        borderRadius: 2,
+        borderSkipped: false,
+        yAxisID: 'y',
+        order: 1
+      };
+    }
+  });
+}
+
+// ── Hito plugin ──
+const hitoPlugin = {
+  id: 'hitoLines',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    hitos.forEach(h => {
+      const x = scales.x.getPixelForValue(h.idx);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = '#7F77DD';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5,4]);
+      ctx.globalAlpha = 0.55;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.font = '10px system-ui';
+      ctx.fillStyle = '#7F77DD';
+      ctx.textAlign = 'center';
+      ctx.fillText('▲', x, chartArea.bottom + 13);
+      ctx.restore();
+    });
+  }
+};
+
+// ── Create chart ──
+const sc = scaleConfig['res'];
+const myChart = new Chart(document.getElementById('mainChart'), {
+  type: 'bar',
+  plugins: [hitoPlugin],
+  data: { labels, datasets: buildDatasets('res') },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: {
+      x: {
+        grid: { color: gridC },
+        ticks: { color: tickC, font: { size: 10.5 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 13 }
+      },
+      y: {
+        grid: { color: gridC },
+        ticks: { color: colors['res'], font: { size: 10.5 }, callback: v => sc.fmt(v) },
+        min: sc.min,
+        max: sc.max
+      }
+    }
+  }
+});
+
+// ── Switch active series ──
+function setActive(key) {
+  activeKey = key;
+
+  // Update tabs
+  ['res','bcra','bal'].forEach(k => {
+    const t = document.getElementById('tab-' + k);
+    t.className = 'tab' + (k === key ? ' active-' + k : '');
+  });
+
+  // Rebuild datasets
+  myChart.data.datasets = buildDatasets(key);
+
+  // Update scale
+  const sc = scaleConfig[key];
+  myChart.options.scales.y.min = sc.min;
+  myChart.options.scales.y.max = sc.max;
+  myChart.options.scales.y.ticks.color = colors[key];
+  myChart.options.scales.y.ticks.callback = v => sc.fmt(v);
+
+  // Update axis label
+  document.getElementById('lbl-left').textContent = labels3[key] + ' (mill. USD)';
+  document.getElementById('lbl-left').style.color = colors[key];
+
+  myChart.update('none');
+}
+
+// ── Tooltip ──
+const tooltipEl = document.getElementById('tooltip');
+const ttTitle   = document.getElementById('tt-title');
+const dot1 = document.getElementById('dot1'); const v1 = document.getElementById('v1');
+const dot2 = document.getElementById('dot2'); const v2 = document.getElementById('v2');
+const dot3 = document.getElementById('dot3'); const v3 = document.getElementById('v3');
+const ttHl  = document.getElementById('tt-hl');
+const ttHd  = document.getElementById('tt-hd');
+const wrap  = document.querySelector('.chart-wrap');
+const canvas = document.getElementById('mainChart');
+
+canvas.addEventListener('mousemove', e => {
+  const pts = myChart.getElementsAtEventForMode(e, 'index', { intersect: false }, true);
+  if (!pts.length) { tooltipEl.style.display = 'none'; return; }
+
+  const idx = pts[0].index;
+  const h = hitoMap[idx];
+
+  ttTitle.textContent = labels[idx];
+
+  const rows = [
+    { dot: dot1, el: v1, key: 'res'  },
+    { dot: dot2, el: v2, key: 'bcra' },
+    { dot: dot3, el: v3, key: 'bal'  }
+  ];
+  rows.forEach(({ dot, el, key }) => {
+    const val = series[key][idx];
+    const sign = val >= 0 ? '+' : '';
+    dot.style.background = key === activeKey ? colors[key] : (isDark ? '#333' : '#ccc');
+    el.textContent = labels3[key] + ': ' + sign + Math.round(val).toLocaleString('es-AR') + ' M';
+    el.style.fontWeight = key === activeKey ? '500' : '400';
+    el.style.color      = key === activeKey ? colors[key] : tickC;
+  });
+
+  if (h) {
+    ttHl.textContent   = h.emoji + ' ' + h.label;
+    ttHd.textContent   = h.desc;
+    ttHl.style.display = '';
+    ttHd.style.display = '';
+  } else {
+    ttHl.style.display = 'none';
+    ttHd.style.display = 'none';
+  }
+
+  tooltipEl.style.display = 'block';
+  const wr = wrap.getBoundingClientRect();
+  let left = e.clientX - wr.left + 14;
+  let top  = e.clientY - wr.top  - 20;
+  const tw = tooltipEl.offsetWidth;
+  if (left + tw > wrap.offsetWidth - 8) left = e.clientX - wr.left - tw - 14;
+  tooltipEl.style.left = left + 'px';
+  tooltipEl.style.top  = Math.max(0, top) + 'px';
+});
+
+canvas.addEventListener('mouseleave', () => { tooltipEl.style.display = 'none'; });
+</script>
+</body>
+</html>

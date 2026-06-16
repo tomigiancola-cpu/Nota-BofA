@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPC Argentina — Inflación mensual 2023–2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:      #ffffff;
+    --surface: #f8f8f6;
+    --sur2:    #f1efe8;
+    --border:  rgba(0,0,0,0.07);
+    --text-1:  #2c2c2a;
+    --text-2:  #5f5e5a;
+    --text-3:  #888780;
+    --c-real:  #378ADD;
+    --c-proy:  #97C459;
+    --c-hito:  #7F77DD;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:      #131312;
+      --surface: #1a1a18;
+      --sur2:    #222220;
+      --border:  rgba(255,255,255,0.07);
+      --text-1:  #e0dfdb;
+      --text-2:  #a0a09a;
+      --text-3:  #55585f;
+    }
+  }
+  body {
+    background: var(--bg);
+    color: var(--text-1);
+    font-family: system-ui, -apple-system, sans-serif;
+    padding: 2rem 1.5rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .header {
+    margin-bottom: 1.4rem;
+    border-left: 3px solid var(--c-real);
+    padding-left: 0.85rem;
+  }
+  .header-title { font-size: 1.05rem; font-weight: 500; color: var(--text-1); margin-bottom: 3px; }
+  .header-sub   { font-size: 12.5px; color: var(--text-3); }
+  .tabs { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+  .tab {
+    padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid transparent;
+    background: var(--sur2); color: var(--text-3); transition: all 0.15s; user-select: none;
+  }
+  .tab:hover { color: var(--text-1); }
+  .tab.active-bar  { background: rgba(55,138,221,0.12); color: var(--c-real); border-color: var(--c-real); }
+  .tab.active-line { background: rgba(99,153,34,0.10);  color: #3B6D11;       border-color: #3B6D11; }
+  .chart-box {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.1rem 1rem;
+    position: relative;
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 8px; font-size: 11.5px; color: var(--text-3); }
+  .leg-item { display: flex; align-items: center; gap: 5px; }
+  .leg-sq   { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+  .leg-line { width: 20px; height: 3px; border-radius: 2px; display: inline-block; }
+  .leg-dash { width: 20px; height: 0; border-top: 2.5px dashed var(--c-proy); display: inline-block; }
+  .leg-hito { width: 2px; height: 13px; border-radius: 1px; background: var(--c-hito); display: inline-block; }
+  .axis-lbl { font-size: 10.5px; color: var(--text-3); margin-bottom: 6px; }
+  .chart-wrap { position: relative; width: 100%; height: 360px; }
+  .ctt {
+    position: absolute; pointer-events: none;
+    background: var(--bg); border: 0.5px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; font-size: 11.5px;
+    max-width: 240px; z-index: 20; display: none; line-height: 1.6;
+  }
+  .ctt-title { font-weight: 500; color: var(--text-1); margin-bottom: 4px; font-size: 12px; }
+  .ctt-row   { color: var(--text-2); font-size: 11px; }
+  .ctt-proy  { color: var(--c-proy); font-size: 10.5px; font-style: italic; margin-top: 2px; }
+  .ctt-hito  { margin-top: 7px; padding-top: 7px; border-top: 0.5px solid var(--border); color: var(--c-hito); font-size: 11px; font-weight: 500; }
+  .ctt-hdesc { color: var(--text-3); font-size: 10.5px; margin-top: 2px; }
+  .source { text-align: right; font-size: 10.5px; font-style: italic; color: var(--text-3); margin-top: 0.6rem; }
+  @media (max-width: 520px) { body { padding: 1rem; } .chart-wrap { height: 270px; } }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-title">IPC Argentina — Inflación mensual · Jun 2023 – Dic 2026</div>
+  <div class="header-sub">Datos INDEC hasta mayo 2026 · Proyecciones REM–BCRA para jun–dic 2026</div>
+</header>
+
+<div class="tabs">
+  <div class="tab active-bar" id="tab-bar"  onclick="setMode('bar')">Barras mensuales</div>
+  <div class="tab"            id="tab-line" onclick="setMode('line')">Línea continua</div>
+</div>
+
+<div class="chart-box">
+  <div class="legend">
+    <span class="leg-item"><span class="leg-sq" style="background:var(--c-real);"></span><span>Dato INDEC</span></span>
+    <span class="leg-item"><span class="leg-sq" style="background:var(--c-proy); opacity:.8;"></span><span>Proyección REM</span></span>
+    <span class="leg-item"><span class="leg-hito"></span><span>Hito — pasar el cursor</span></span>
+  </div>
+  <div class="axis-lbl">Variación mensual del IPC (%)</div>
+  <div class="chart-wrap">
+    <canvas id="mainChart" role="img" aria-label="IPC Argentina variación mensual desde junio 2023 hasta diciembre 2026. Pico de 25,5% en diciembre 2023, desaceleración sostenida hasta 1,5% en mayo 2025. Proyección REM 2026 cierra en ~1,8%."></canvas>
+    <div class="ctt" id="tooltip">
+      <div class="ctt-title" id="tt-title"></div>
+      <div class="ctt-row"   id="tt-val"></div>
+      <div class="ctt-proy"  id="tt-proy" style="display:none;"></div>
+      <div class="ctt-hito"  id="tt-hl"   style="display:none;"></div>
+      <div class="ctt-hdesc" id="tt-hd"   style="display:none;"></div>
+    </div>
+  </div>
+</div>
+<p class="source">Elaboración propia en base a datos del INDEC y REM del BCRA</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridC  = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+const tickC  = isDark ? '#55585f' : '#888780';
+
+// Labels: Jun-23 → Dic-26
+const labels = [
+  'Jun-23','Jul-23','Ago-23','Sep-23','Oct-23','Nov-23','Dic-23',
+  'Ene-24','Feb-24','Mar-24','Abr-24','May-24','Jun-24',
+  'Jul-24','Ago-24','Sep-24','Oct-24','Nov-24','Dic-24',
+  'Ene-25','Feb-25','Mar-25','Abr-25','May-25','Jun-25',
+  'Jul-25','Ago-25','Sep-25','Oct-25','Nov-25','Dic-25',
+  'Ene-26','Feb-26','Mar-26','Abr-26','May-26',
+  'Jun-26','Jul-26','Ago-26','Sep-26','Oct-26','Nov-26','Dic-26'
+];
+
+// IPC mensual exacto INDEC (nulos = proyección)
+// 2023: desde jun (datos exactos INDEC)
+// Fuente: INDEC informes de prensa mensuales
+const ipcReal = [
+  6.0,  6.3, 12.4, 12.7,  8.3, 12.8, 25.5,   // Jun-Dic 2023
+  20.6, 13.2, 11.0,  8.8,  4.2,  4.6,          // Ene-Jun 2024
+   4.0,  4.2,  3.5,  2.7,  2.4,  2.7,          // Jul-Dic 2024
+   2.2,  2.4,  3.7,  2.8,  1.5,  1.6,          // Ene-Jun 2025
+   1.9,  1.9,  2.2,  2.7,  2.5,  2.7,          // Jul-Dic 2025
+   2.9,  2.9,  3.4,  2.6,  2.1,                // Ene-May 2026
+  null, null, null, null, null, null, null       // Jun-Dic 2026 → proyecciones
+];
+
+// Proyecciones REM (mayo 2026 REM): jun 2,1 / jul 2,0 / ago 1,8 / sep 1,9 / oct 1,8 / nov 1,8 / dic 1,8
+const ipcProy = [
+  null,null,null,null,null,null,null,
+  null,null,null,null,null,null,
+  null,null,null,null,null,null,
+  null,null,null,null,null,null,
+  null,null,null,null,null,null,
+  null,null,null,null,null,
+  2.1, 2.0, 1.8, 1.9, 1.8, 1.8, 1.8
+];
+
+// Hitos
+const hitos = [
+  { idx: 6,  emoji:'🗳️', label:'Asunción Milei — Dic 2023',         desc:'IPC 25,5%: el pico de la hiperinflación heredada. Inicia el shock de ajuste fiscal.' },
+  { idx: 7,  emoji:'💥', label:'Pico inflación — Ene 2024',          desc:'IPC 20,6% mensual. Efecto del ajuste del tipo de cambio +100% en dic-23.' },
+  { idx: 18, emoji:'📉', label:'IPC en un dígito — Dic 2024',        desc:'IPC 2,7%: el más bajo desde 2018. 12 meses consecutivos de desaceleración.' },
+  { idx: 22, emoji:'⚠️', label:'Rebrote — Mar 2025',                 desc:'IPC sube a 3,7% por ajuste tarifario. Genera ruido sobre la desinflación.' },
+  { idx: 24, emoji:'🏆', label:'Mínimo histórico — May 2025',        desc:'IPC 1,5%: mínimo desde 2017. 13 meses consecutivos de baja interanual.' },
+  { idx: 32, emoji:'🔥', label:'Rebrote por combustibles — Mar 2026', desc:'IPC 3,4% por ajuste de combustibles +25% y tarifas. Pico del año 2026.' },
+  { idx: 36, emoji:'📊', label:'Inicio proyecciones REM — Jun 2026', desc:'A partir de aquí: proyecciones medianas REM–BCRA (mayo 2026). Meta anual 2026: ~30,5%.' }
+];
+const hitoMap = {};
+hitos.forEach(h => { hitoMap[h.idx] = h; });
+
+const hitoPlugin = {
+  id: 'hitoLines',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    hitos.forEach(h => {
+      const x = scales.x.getPixelForValue(h.idx);
+      ctx.save();
+      ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = '#7F77DD'; ctx.lineWidth = 1.5; ctx.setLineDash([5,4]); ctx.globalAlpha = 0.6;
+      ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1;
+      ctx.font = '10px system-ui'; ctx.fillStyle = '#7F77DD'; ctx.textAlign = 'center';
+      ctx.fillText('▲', x, chartArea.bottom + 13);
+      ctx.restore();
+    });
+  }
+};
+
+// Separador visual proyección
+const proyPlugin = {
+  id: 'proyLine',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    const sepIdx = 36; // Jun-26 = primer dato proyectado
+    const x = scales.x.getPixelForValue(sepIdx);
+    ctx.save();
+    ctx.beginPath(); ctx.moveTo(x, chartArea.top); ctx.lineTo(x, chartArea.bottom);
+    ctx.strokeStyle = isDark ? 'rgba(151,196,89,0.4)' : 'rgba(59,109,17,0.35)';
+    ctx.lineWidth = 1; ctx.setLineDash([3,3]);
+    ctx.stroke(); ctx.setLineDash([]);
+    ctx.font = '9px system-ui'; ctx.fillStyle = isDark ? '#97c459' : '#3B6D11';
+    ctx.textAlign = 'left'; ctx.fillText('▶ Proyección REM', x + 4, chartArea.top + 12);
+    ctx.restore();
+  }
+};
+
+let mode = 'bar';
+
+function buildDatasets(m) {
+  const realColor = ipcReal.map((v,i) => {
+    if (v === null) return 'transparent';
+    return v >= 10
+      ? (isDark ? 'rgba(55,138,221,0.90)' : 'rgba(55,138,221,0.85)')
+      : (isDark ? 'rgba(55,138,221,0.75)' : 'rgba(55,138,221,0.70)');
+  });
+  const proyColor = isDark ? 'rgba(151,196,89,0.80)' : 'rgba(99,153,34,0.75)';
+
+  if (m === 'bar') {
+    return [
+      { label:'INDEC', data: ipcReal, type:'bar', backgroundColor: realColor, borderRadius: 2, borderSkipped: false },
+      { label:'REM',   data: ipcProy, type:'bar', backgroundColor: proyColor, borderRadius: 2, borderSkipped: false }
+    ];
+  } else {
+    // Combinar en una sola línea, marcando proyecciones con segmentos punteados
+    const combined = ipcReal.map((v,i) => v !== null ? v : (ipcProy[i] !== null ? ipcProy[i] : null));
+    const isProyPt = ipcProy.map(v => v !== null);
+    return [
+      {
+        label: 'IPC',
+        data: combined,
+        type: 'line',
+        borderColor: (ctx) => isProyPt[ctx.p1DataIndex] ? '#97C459' : '#378ADD',
+        backgroundColor: 'transparent',
+        borderWidth: 2.5,
+        segment: {
+          borderColor: ctx => isProyPt[ctx.p1DataIndex] ? '#97C459' : '#378ADD',
+          borderDash:  ctx => isProyPt[ctx.p1DataIndex] ? [5,4] : []
+        },
+        pointRadius: 0,
+        pointHoverRadius: 5,
+        pointHoverBackgroundColor: ctx => isProyPt[ctx.dataIndex] ? '#97C459' : '#378ADD',
+        tension: 0.3,
+        spanGaps: true
+      }
+    ];
+  }
+}
+
+const myChart = new Chart(document.getElementById('mainChart'), {
+  type: 'bar',
+  plugins: [hitoPlugin, proyPlugin],
+  data: { labels, datasets: buildDatasets('bar') },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: { mode:'index', intersect:false },
+    plugins: { legend:{ display:false }, tooltip:{ enabled:false } },
+    scales: {
+      x: { grid:{ color:gridC }, ticks:{ color:tickC, font:{size:10}, maxRotation:45, autoSkip:true, maxTicksLimit:16 } },
+      y: {
+        grid:{ color:gridC },
+        ticks:{ color:tickC, font:{size:10.5}, callback: v => v.toFixed(1) + '%' },
+        min: 0, max: 27
+      }
+    }
+  }
+});
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('tab-bar').className  = 'tab' + (m==='bar'  ? ' active-bar'  : '');
+  document.getElementById('tab-line').className = 'tab' + (m==='line' ? ' active-line' : '');
+  myChart.data.datasets = buildDatasets(m);
+  myChart.options.scales.y.max = 27;
+  myChart.update('none');
+}
+
+// Tooltip
+const tooltipEl = document.getElementById('tooltip');
+const ttTitle = document.getElementById('tt-title');
+const ttVal   = document.getElementById('tt-val');
+const ttProy  = document.getElementById('tt-proy');
+const ttHl    = document.getElementById('tt-hl');
+const ttHd    = document.getElementById('tt-hd');
+const wrap    = document.querySelector('.chart-wrap');
+
+document.getElementById('mainChart').addEventListener('mousemove', e => {
+  const pts = myChart.getElementsAtEventForMode(e, 'index', { intersect:false }, true);
+  if (!pts.length) { tooltipEl.style.display = 'none'; return; }
+  const idx = pts[0].index;
+  const real = ipcReal[idx]; const proy = ipcProy[idx];
+  const h = hitoMap[idx];
+
+  ttTitle.textContent = labels[idx];
+  if (real !== null) {
+    ttVal.textContent = 'IPC INDEC: ' + real.toFixed(1) + '%';
+    ttProy.style.display = 'none';
+  } else if (proy !== null) {
+    ttVal.textContent = 'Proyección REM: ' + proy.toFixed(1) + '%';
+    ttProy.textContent = '⚠ Dato estimado, no oficial';
+    ttProy.style.display = '';
+  } else {
+    ttVal.textContent = 'Sin dato'; ttProy.style.display = 'none';
+  }
+
+  if (h) { ttHl.textContent = h.emoji + ' ' + h.label; ttHd.textContent = h.desc; ttHl.style.display = ''; ttHd.style.display = ''; }
+  else { ttHl.style.display = 'none'; ttHd.style.display = 'none'; }
+
+  tooltipEl.style.display = 'block';
+  const wr = wrap.getBoundingClientRect();
+  let left = e.clientX - wr.left + 14, top = e.clientY - wr.top - 20;
+  const tw = tooltipEl.offsetWidth;
+  if (left + tw > wrap.offsetWidth - 8) left = e.clientX - wr.left - tw - 14;
+  tooltipEl.style.left = left + 'px'; tooltipEl.style.top = Math.max(0, top) + 'px';
+});
+document.getElementById('mainChart').addEventListener('mouseleave', () => { tooltipEl.style.display = 'none'; });
+</script>
+</body>
+</html>
