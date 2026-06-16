@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AL30D & Riesgo País Argentina 2023–2026</title>
+<link rel="stylesheet" href="https://unpkg.com/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #fff;
+    color: #2c2c2a;
+    padding: 1.5rem;
+    max-width: 780px;
+    margin: 0 auto;
+  }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a18; color: #e0dfdb; }
+    .metric { background: #242422 !important; }
+    .custom-tooltip { background: #2c2c2a !important; border-color: rgba(255,255,255,0.15) !important; }
+    .tooltip-title { color: #e0dfdb !important; }
+    .tooltip-body { color: #a0a09a !important; }
+    .tooltip-hito { color: #97c459 !important; }
+    .chart-box { background: #1e1e1c !important; border-color: rgba(255,255,255,0.07) !important; }
+    .source { color: #55585f !important; }
+    .legend-label { color: #888780 !important; }
+    .header-title { color: #e0dfdb !important; }
+    .header-sub { color: #888780 !important; }
+  }
+
+  .header { margin-bottom: 1.25rem; border-left: 3px solid #378ADD; padding-left: 0.75rem; }
+  .header-title { font-size: 1.1rem; font-weight: 500; color: #2c2c2a; margin-bottom: 3px; }
+  .header-sub { font-size: 13px; color: #5f5e5a; }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 1.25rem;
+  }
+  .metric {
+    background: #f1efe8;
+    border-radius: 8px;
+    padding: 0.65rem 0.9rem;
+  }
+  .metric-label { font-size: 11px; color: #888780; margin-bottom: 3px; }
+  .metric-value { font-size: 1.25rem; font-weight: 500; color: #2c2c2a; }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 8px;
+    font-size: 12px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-label { color: #888780; }
+  .legend-line-al30 { width: 22px; height: 3px; background: #378ADD; border-radius: 2px; display: inline-block; }
+  .legend-dash-riesgo { width: 22px; height: 0; border-top: 3px dashed #D85A30; display: inline-block; }
+  .legend-hito-tick { width: 3px; height: 14px; background: #3B6D11; border-radius: 1px; display: inline-block; }
+
+  .chart-box {
+    background: #fafaf8;
+    border: 0.5px solid rgba(0,0,0,0.08);
+    border-radius: 10px;
+    padding: 1.1rem 1.1rem 0.9rem;
+    position: relative;
+  }
+  .chart-wrap { position: relative; width: 100%; height: 360px; }
+
+  canvas { display: block; }
+
+  .custom-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    max-width: 230px;
+    z-index: 20;
+    display: none;
+    line-height: 1.55;
+  }
+  .tooltip-title { font-weight: 500; color: #2c2c2a; margin-bottom: 4px; font-size: 13px; }
+  .tooltip-body { color: #5f5e5a; font-size: 12px; }
+  .tooltip-hito {
+    margin-top: 7px;
+    padding-top: 7px;
+    border-top: 0.5px solid rgba(0,0,0,0.1);
+    color: #3B6D11;
+    font-size: 11.5px;
+    font-weight: 500;
+  }
+  .tooltip-hito-desc { margin-top: 2px; color: #5f5e5a; font-size: 11px; }
+
+  .source {
+    margin-top: 0.6rem;
+    text-align: right;
+    font-size: 10.5px;
+    font-style: italic;
+    color: #888780;
+  }
+
+  @media (max-width: 520px) {
+    .chart-wrap { height: 260px; }
+    body { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">AL30D & Riesgo País Argentina — Jun 2023 / Jun 2026</div>
+  <div class="header-sub">Precio del Bonar 2030 en dólares vs. EMBI+ JP Morgan (puntos básicos)</div>
+</div>
+
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">AL30D hoy</div>
+    <div class="metric-value">USD 65</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">AL30D mínimo (Jun-23)</div>
+    <div class="metric-value">USD 24</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Riesgo país hoy</div>
+    <div class="metric-value">430 pb</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Riesgo país pico (Nov-23)</div>
+    <div class="metric-value">2.412 pb</div>
+  </div>
+</div>
+
+<div class="chart-box">
+  <div class="legend">
+    <span class="legend-item">
+      <span class="legend-line-al30"></span>
+      <span class="legend-label">AL30D precio (USD, eje izq.)</span>
+    </span>
+    <span class="legend-item">
+      <span class="legend-dash-riesgo"></span>
+      <span class="legend-label">Riesgo país EMBI+ (pb, eje der.)</span>
+    </span>
+    <span class="legend-item">
+      <span class="legend-hito-tick"></span>
+      <span class="legend-label">Hito clave — pasar el cursor para ver</span>
+    </span>
+  </div>
+
+  <div class="chart-wrap">
+    <canvas id="mainChart"
+      role="img"
+      aria-label="Precio del AL30D en dólares y riesgo país EMBI+ Argentina desde junio 2023 a junio 2026. AL30D subió de USD 24 a USD 65; EMBI+ bajó de 2.412 a 430 pb.">
+      AL30D: desde USD 24 (jun-2023) hasta USD 65 (jun-2026). Riesgo país: desde 2.412 pb (nov-2023) hasta 430 pb (jun-2026).
+    </canvas>
+
+    <div class="custom-tooltip" id="tooltip">
+      <div class="tooltip-title" id="tt-title"></div>
+      <div class="tooltip-body" id="tt-al30"></div>
+      <div class="tooltip-body" id="tt-riesgo"></div>
+      <div class="tooltip-hito" id="tt-hito-label" style="display:none;"></div>
+      <div class="tooltip-hito-desc" id="tt-hito-desc" style="display:none;"></div>
+    </div>
+  </div>
+</div>
+
+<p class="source">Elaboración propia en base a datos de Ámbito Financiero y datos abiertos de mercado (BYMA / JP Morgan EMBI+)</p>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const labels = [
+  'Jun-23','Jul-23','Ago-23','Sep-23','Oct-23','Nov-23','Dic-23',
+  'Ene-24','Feb-24','Mar-24','Abr-24','May-24','Jun-24',
+  'Jul-24','Ago-24','Sep-24','Oct-24','Nov-24','Dic-24',
+  'Ene-25','Feb-25','Mar-25','Abr-25','May-25','Jun-25',
+  'Jul-25','Ago-25','Sep-25','Oct-25','Nov-25','Dic-25',
+  'Ene-26','Feb-26','Mar-26','Abr-26','May-26','Jun-26'
+];
+
+const al30d = [
+  23.71, 30.70, 33.67, 29.23, 24.95, 34.80, 37.85,
+  39.60, 45.75, 46.40, 58.70, 56.50, 55.15,
+  50.25, 54.40, 58.27, 63.90, 71.01, 75.23,
+  76.10, 65.57, 65.65, 67.35, 68.38, 68.45,
+  59.79, 58.88, 53.00, 63.90, 64.92, 67.50,
+  60.61, 61.04, 60.59, 63.31, 63.97, 64.57
+];
+
+const riesgoPais = [
+  2150, 2200, 2250, 2280, 2350, 2412, 1923,
+  2102, 1700, 1450, 1200, 1380, 1460,
+  1600, 1530, 1390, 1150, 820, 720,
+  569, 780, 830, 587, 750, 770,
+  829, 829, 800, 640, 740, 690,
+  620, 780, 710, 587, 520, 430
+];
+
+const hitos = [
+  { idx: 5,  emoji: '🗳️', label: 'Elección Milei — Nov 2023',       desc: 'Balotaje: Milei presidente electo. Riesgo país pico: 2.412 pb. AL30D: USD 35.' },
+  { idx: 7,  emoji: '📉', label: 'Pico EMBI Milei — Ene 2024',      desc: 'EMBI toca 2.102 pb, máximo de la gestión. Inicio del shock de ajuste fiscal.' },
+  { idx: 10, emoji: '📈', label: 'Ajuste fiscal — Abr 2024',         desc: 'Primer superávit fiscal en años. EMBI cae a 1.200 pb. AL30D sube a USD 59.' },
+  { idx: 13, emoji: '⚠️', label: 'Rebote EMBI — Jul 2024',           desc: 'Tensiones cambiarias y reservas negativas. Riesgo país vuelve a 1.600 pb.' },
+  { idx: 19, emoji: '💰', label: 'Blanqueo de capitales — Ene 2025', desc: 'Blanqueo exitoso. EMBI perfora 569 pb, mínimo desde 2018. AL30D: USD 76.' },
+  { idx: 23, emoji: '🤝', label: 'Acuerdo FMI — Abr 2025',           desc: 'FMI aprueba USD 20.000 M a 48 meses (11 abr 2025). EMBI: 587 pb. Flotación con bandas cambiarias.' },
+  { idx: 36, emoji: '⭐', label: 'S&P sube nota — Jun 2026',          desc: 'S&P eleva calificación de CCC+ a B-. EMBI cae a 430 pb, mínimo en 8 años.' }
+];
+
+const hitoMap = {};
+hitos.forEach(h => { hitoMap[h.idx] = h; });
+
+const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+const textColor = isDark ? '#a0a09a' : '#888780';
+
+const hitoPlugin = {
+  id: 'hitoLines',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    if (!chartArea) return;
+    hitos.forEach(h => {
+      const x = scales.x.getPixelForValue(h.idx);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = '#3B6D11';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.globalAlpha = 0.7;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
+      ctx.font = '11px system-ui';
+      ctx.fillStyle = '#3B6D11';
+      ctx.textAlign = 'center';
+      ctx.fillText('▲', x, chartArea.bottom + 14);
+      ctx.restore();
+    });
+  }
+};
+
+const myChart = new Chart(document.getElementById('mainChart'), {
+  type: 'line',
+  plugins: [hitoPlugin],
+  data: {
+    labels,
+    datasets: [
+      {
+        label: 'AL30D (USD)',
+        data: al30d,
+        borderColor: '#378ADD',
+        backgroundColor: 'rgba(55,138,221,0.08)',
+        borderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#378ADD',
+        pointHoverBorderColor: isDark ? '#1a1a18' : '#fff',
+        pointHoverBorderWidth: 2,
+        tension: 0.35,
+        fill: true,
+        yAxisID: 'y1'
+      },
+      {
+        label: 'Riesgo país (pb)',
+        data: riesgoPais,
+        borderColor: '#D85A30',
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        borderDash: [6, 3],
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: '#D85A30',
+        pointHoverBorderColor: isDark ? '#1a1a18' : '#fff',
+        pointHoverBorderWidth: 2,
+        tension: 0.35,
+        yAxisID: 'y2'
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: { enabled: false }
+    },
+    scales: {
+      x: {
+        grid: { color: gridColor },
+        ticks: { color: textColor, font: { size: 11 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 13 }
+      },
+      y1: {
+        type: 'linear', position: 'left',
+        grid: { color: gridColor },
+        ticks: { color: '#378ADD', font: { size: 11 }, callback: v => 'USD ' + Math.round(v) },
+        title: { display: true, text: 'AL30D precio (USD)', color: '#378ADD', font: { size: 11 } },
+        min: 0, max: 90
+      },
+      y2: {
+        type: 'linear', position: 'right',
+        grid: { drawOnChartArea: false },
+        ticks: { color: '#D85A30', font: { size: 11 }, callback: v => v.toLocaleString('es-AR') + ' pb' },
+        title: { display: true, text: 'Riesgo país EMBI+ (pb)', color: '#D85A30', font: { size: 11 } },
+        min: 0, max: 2600
+      }
+    }
+  }
+});
+
+// Tooltip personalizado
+const tooltipEl   = document.getElementById('tooltip');
+const ttTitle     = document.getElementById('tt-title');
+const ttAl30      = document.getElementById('tt-al30');
+const ttRiesgo    = document.getElementById('tt-riesgo');
+const ttHitoLabel = document.getElementById('tt-hito-label');
+const ttHitoDesc  = document.getElementById('tt-hito-desc');
+const chartWrap   = document.querySelector('.chart-wrap');
+const canvas      = document.getElementById('mainChart');
+
+canvas.addEventListener('mousemove', e => {
+  const pts = myChart.getElementsAtEventForMode(e, 'index', { intersect: false }, true);
+  if (!pts.length) { tooltipEl.style.display = 'none'; return; }
+
+  const idx = pts[0].index;
+  const h   = hitoMap[idx];
+
+  ttTitle.textContent  = labels[idx];
+  ttAl30.textContent   = '  AL30D: USD ' + al30d[idx].toFixed(2);
+  ttRiesgo.textContent = '  Riesgo país: ' + riesgoPais[idx].toLocaleString('es-AR') + ' pb';
+
+  if (h) {
+    ttHitoLabel.textContent   = h.emoji + ' ' + h.label;
+    ttHitoDesc.textContent    = h.desc;
+    ttHitoLabel.style.display = '';
+    ttHitoDesc.style.display  = '';
+  } else {
+    ttHitoLabel.style.display = 'none';
+    ttHitoDesc.style.display  = 'none';
+  }
+
+  tooltipEl.style.display = 'block';
+  const wRect = chartWrap.getBoundingClientRect();
+  let left = e.clientX - wRect.left + 14;
+  let top  = e.clientY - wRect.top  - 20;
+  const tw = tooltipEl.offsetWidth;
+  if (left + tw > chartWrap.offsetWidth - 10) left = e.clientX - wRect.left - tw - 14;
+  tooltipEl.style.left = left + 'px';
+  tooltipEl.style.top  = Math.max(0, top) + 'px';
+});
+
+canvas.addEventListener('mouseleave', () => { tooltipEl.style.display = 'none'; });
+</script>
+</body>
+</html>
